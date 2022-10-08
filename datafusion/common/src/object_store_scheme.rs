@@ -1,7 +1,7 @@
 use crate::error::Result;
 
-use std::str::FromStr;
 use crate::DataFusionError;
+use std::str::FromStr;
 
 #[derive(Debug, PartialEq, Eq, clap::ArgEnum, Clone)]
 pub enum ObjectStoreScheme {

@@ -280,7 +280,9 @@ impl FileOpener for S3SelectOpener {
         let chunk_size = self.chunk_size;
         let buffer_size = self.buffer_size;
         let delimiter = std::str::from_utf8(self.delimiter.as_bytes())
-            .map_err(|_| DataFusionError::Internal("Unable to convert delimiter to str".into()))?
+            .map_err(|_| {
+                DataFusionError::Internal("Unable to convert delimiter to str".into())
+            })?
             .to_string();
 
         let err_msg = "Unable to parse S3 path";
@@ -347,8 +349,7 @@ impl FileOpener for S3SelectOpener {
                                 Ok(builder.parquet(ParquetInput::builder().build()))
                             }
                             _ => Err(DataFusionError::NotImplemented(
-                                "S3 Select is only available for JSON/CSV/Parquet"
-                                    .into(),
+                                "S3 Select is only available for JSON/CSV/Parquet".into(),
                             )),
                         }?;
 
@@ -395,22 +396,16 @@ impl FileOpener for S3SelectOpener {
                         //        in a request body to zero.
                         //        Once fixed, remove this logic.
                         //        https://github.com/awslabs/aws-sdk-rust/issues/630
-                        let request = request
-                            .map_request::<DataFusionError>(
-                            |x| {
-                                Ok(x.map(|y| {
-                                    y.map(|z| {
-                                        let data = z.bytes().unwrap().to_owned();
-                                        let body = String::from_utf8(data).unwrap();
-                                        body.replace(
-                                            "<Start>-1</Start>",
-                                            "<Start> 0</Start>",
-                                        )
+                        let request = request.map_request::<DataFusionError>(|x| {
+                            Ok(x.map(|y| {
+                                y.map(|z| {
+                                    let data = z.bytes().unwrap().to_owned();
+                                    let body = String::from_utf8(data).unwrap();
+                                    body.replace("<Start>-1</Start>", "<Start> 0</Start>")
                                         .into()
-                                    })
-                                }))
-                            },
-                        )?;
+                                })
+                            }))
+                        })?;
 
                         println!("{:?}", request.request());
 

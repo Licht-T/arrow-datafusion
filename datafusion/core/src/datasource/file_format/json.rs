@@ -31,11 +31,11 @@ use async_trait::async_trait;
 use bytes::Buf;
 use log::error;
 
+use datafusion_common::object_store_scheme::ObjectStoreScheme;
+use datafusion_common::DataFusionError;
 use datafusion_expr::combine_filters;
 use object_store::{GetResult, ObjectMeta, ObjectStore};
 use url::Url;
-use datafusion_common::DataFusionError;
-use datafusion_common::object_store_scheme::ObjectStoreScheme;
 
 use super::FileFormat;
 use super::FileScanConfig;

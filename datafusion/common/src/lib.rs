@@ -19,10 +19,10 @@ mod column;
 mod dfschema;
 mod error;
 pub mod from_slice;
+pub mod object_store_scheme;
 #[cfg(feature = "pyarrow")]
 mod pyarrow;
 pub mod scalar;
-pub mod object_store_scheme;
 
 pub use column::Column;
 pub use dfschema::{DFField, DFSchema, DFSchemaRef, ExprSchema, ToDFSchema};

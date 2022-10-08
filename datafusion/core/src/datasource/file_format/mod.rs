@@ -37,12 +37,12 @@ use crate::logical_plan::Expr;
 use crate::physical_plan::file_format::FileScanConfig;
 use crate::physical_plan::{ExecutionPlan, Statistics};
 
+use crate::datasource::object_store::ObjectStoreUrl;
 use async_trait::async_trait;
+use datafusion_common::object_store_scheme::ObjectStoreScheme;
+use datafusion_common::DataFusionError;
 use object_store::{ObjectMeta, ObjectStore};
 use url::Url;
-use datafusion_common::DataFusionError;
-use datafusion_common::object_store_scheme::ObjectStoreScheme;
-use crate::datasource::object_store::ObjectStoreUrl;
 
 /// This trait abstracts all the file format specific implementations
 /// from the `TableProvider`. This helps code re-utilization across
