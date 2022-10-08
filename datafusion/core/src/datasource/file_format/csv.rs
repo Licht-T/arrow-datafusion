@@ -171,11 +171,9 @@ impl FileFormat for CsvFormat {
                 predicate,
                 FileType::CSV,
                 self.file_compression_type.to_owned(),
-                Some(self.has_header),
-                Some(self.delimiter),
-                None,
-                None,
-            );
+            )
+            .with_has_header(self.has_header)
+            .with_delimiter(self.delimiter);
             Ok(Arc::new(exec))
         } else {
             let exec = CsvExec::new(

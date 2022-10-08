@@ -87,10 +87,6 @@ impl S3SelectExec {
         predicate: Option<Expr>,
         file_type: FileType,
         file_compression_type: FileCompressionType,
-        has_header: Option<bool>,
-        delimiter: Option<u8>,
-        chunk_size: Option<usize>,
-        buffer_size: Option<usize>,
     ) -> Self {
         let (projected_schema, projected_statistics) = base_config.project();
 
@@ -102,11 +98,35 @@ impl S3SelectExec {
             metrics: ExecutionPlanMetricsSet::new(),
             file_type,
             file_compression_type,
-            has_header: has_header.unwrap_or(true),
-            delimiter: delimiter.unwrap_or(DEFAULT_DELIMITER),
-            chunk_size: chunk_size.unwrap_or(DEFAULT_CHUNK_SIZE),
-            buffer_size: buffer_size.unwrap_or(DEFAULT_BUFFER_SIZE),
+            has_header: true,
+            delimiter: DEFAULT_DELIMITER,
+            chunk_size: DEFAULT_CHUNK_SIZE,
+            buffer_size: DEFAULT_BUFFER_SIZE,
         }
+    }
+
+    /// has_header setter
+    pub fn with_has_header(mut self, has_header: bool) -> Self {
+        self.has_header = has_header;
+        self
+    }
+
+    /// delimiter setter
+    pub fn with_delimiter(mut self, delimiter: u8) -> Self {
+        self.delimiter = delimiter;
+        self
+    }
+
+    /// chunk_size setter
+    pub fn with_chunk_size(mut self, chunk_size: usize) -> Self {
+        self.chunk_size = chunk_size;
+        self
+    }
+
+    /// buffer_size setter
+    pub fn with_buffer_size(mut self, buffer_size: usize) -> Self {
+        self.buffer_size = buffer_size;
+        self
     }
 }
 
@@ -305,7 +325,7 @@ impl FileOpener for S3SelectOpener {
                         //        and rewrite a request body in later step.
                         //        Once fixed, remove this logic.
                         //        https://github.com/awslabs/aws-sdk-rust/issues/630
-                        let start = match start <= 0 {
+                        let start = match start == 0 {
                             true => -1,
                             false => start as i64,
                         };

@@ -152,10 +152,6 @@ impl FileFormat for JsonFormat {
                 predicate,
                 FileType::JSON,
                 self.file_compression_type.to_owned(),
-                None,
-                None,
-                None,
-                None,
             );
             Ok(Arc::new(exec))
         } else {

@@ -1003,9 +1003,9 @@ fn _generate_where_condition(
 ) -> Result<String> {
     match expr {
         Expr::Column(c) => {
-            let field = fields.iter().find(|x| *x.name() == c.name).ok_or(
-                DataFusionError::Execution(format!("Unknown field name: {}", c.name)),
-            )?;
+            let field = fields.iter().find(|x| *x.name() == c.name).ok_or_else(|| {
+                DataFusionError::Execution(format!("Unknown field name: {}", c.name))
+            })?;
             let data_type = foo(field.data_type())?;
 
             let name = match anonymous_field_name {
@@ -1086,11 +1086,7 @@ fn _generate_where_condition(
             _generate_where_condition(expr, fields, anonymous_field_name)?
         )),
         Expr::BinaryExpr { left, op, right } => {
-            let is_boolean_op = match op {
-                Operator::And => true,
-                Operator::Or => true,
-                _ => false,
-            };
+            let is_boolean_op = matches!(op, Operator::And | Operator::Or);
 
             let left = _generate_where_condition(left, fields, anonymous_field_name)
                 .or_else(|e| match is_boolean_op {

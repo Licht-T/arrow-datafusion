@@ -84,6 +84,7 @@ pub trait FileFormat: Send + Sync + fmt::Debug {
         filters: &[Expr],
     ) -> Result<Arc<dyn ExecutionPlan>>;
 
+    /// Check if the URL scheme is s3select
     fn is_s3_select(&self, object_store_url: &str) -> bool {
         Url::from_str(object_store_url)
             .map(|x| x.scheme().to_string())
