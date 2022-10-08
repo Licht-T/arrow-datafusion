@@ -33,19 +33,16 @@ use crate::physical_plan::{
 use arrow::json::reader::DecoderOptions;
 use arrow::{datatypes::SchemaRef, json};
 
-use bytes::Buf;
 
 use aws_sdk_s3::model::{
     CompressionType, CsvInput, ExpressionType, FileHeaderInfo, InputSerialization,
     JsonInput, JsonOutput, JsonType, OutputSerialization, ParquetInput, ScanRange,
     SelectObjectContentEventStream,
 };
-use bstr::ByteSlice;
 use datafusion_expr::expr::generate_where_condition;
 use datafusion_expr::Expr;
 
-use futures::{FutureExt, StreamExt, TryFutureExt, TryStreamExt};
-use http_body::Body;
+use futures::{StreamExt, TryStreamExt};
 use itertools::Itertools;
 use object_store::ObjectStore;
 use parquet::data_type::AsBytes;

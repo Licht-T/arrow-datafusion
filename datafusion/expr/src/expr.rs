@@ -915,7 +915,7 @@ pub fn bar(scalar_value: &ScalarValue) -> Result<String> {
                     let nsecs = 0u32;
                     let tz: Tz = tz_opt
                         .to_owned()
-                        .unwrap_or("UTC".to_owned())
+                        .unwrap_or_else(|| "UTC".to_owned())
                         .parse()
                         .map_err(|_| DataFusionError::Internal("".into()))?;
                     Some(
@@ -930,7 +930,7 @@ pub fn bar(scalar_value: &ScalarValue) -> Result<String> {
                     let nsecs = ((i % div) * 1000 * 1000) as u32;
                     let tz: Tz = tz_opt
                         .to_owned()
-                        .unwrap_or("UTC".to_owned())
+                        .unwrap_or_else(|| "UTC".to_owned())
                         .parse()
                         .map_err(|_| DataFusionError::Internal("".into()))?;
                     Some(
@@ -945,7 +945,7 @@ pub fn bar(scalar_value: &ScalarValue) -> Result<String> {
                     let nsecs = ((i % div) * 1000) as u32;
                     let tz: Tz = tz_opt
                         .to_owned()
-                        .unwrap_or("UTC".to_owned())
+                        .unwrap_or_else(|| "UTC".to_owned())
                         .parse()
                         .map_err(|_| DataFusionError::Internal("".into()))?;
                     Some(
@@ -960,7 +960,7 @@ pub fn bar(scalar_value: &ScalarValue) -> Result<String> {
                     let nsecs = (i % div) as u32;
                     let tz: Tz = tz_opt
                         .to_owned()
-                        .unwrap_or("UTC".to_owned())
+                        .unwrap_or_else(|| "UTC".to_owned())
                         .parse()
                         .map_err(|_| DataFusionError::Internal("".into()))?;
                     Some(
@@ -990,7 +990,7 @@ pub fn generate_where_condition(
         Some(expr) => format!(
             "WHERE {}",
             _generate_where_condition(expr, fields, anonymous_field_name,)
-                .unwrap_or("TRUE".to_string())
+                .unwrap_or_else(|_| "TRUE".to_string())
         ),
         None => "".to_string(),
     }
