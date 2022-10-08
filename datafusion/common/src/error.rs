@@ -54,6 +54,7 @@ pub enum DataFusionError {
     ObjectStore(object_store::Error),
     /// Error associated to I/O operations and associated traits.
     IoError(io::Error),
+    TokioJoinError(tokio::task::JoinError),
     /// Error returned when SQL is syntactically incorrect.
     SQL(ParserError),
     /// Error returned on a branch that we know it is possible
@@ -194,6 +195,12 @@ impl Display for SchemaError {
     }
 }
 
+impl From<tokio::task::JoinError> for DataFusionError {
+    fn from(e: tokio::task::JoinError) -> Self {
+        DataFusionError::TokioJoinError(e)
+    }
+}
+
 impl From<io::Error> for DataFusionError {
     fn from(e: io::Error) -> Self {
         DataFusionError::IoError(e)
@@ -276,6 +283,7 @@ impl Display for DataFusionError {
                 write!(f, "Avro error: {}", desc)
             }
             DataFusionError::IoError(ref desc) => write!(f, "IO error: {}", desc),
+            DataFusionError::TokioJoinError(ref desc) => write!(f, "IO error: {}", desc),
             DataFusionError::SQL(ref desc) => {
                 write!(f, "SQL error: {:?}", desc)
             }

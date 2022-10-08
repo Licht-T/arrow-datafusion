@@ -42,7 +42,7 @@ pub trait GetExt {
 }
 
 /// Readable file compression type
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Copy)]
 pub enum FileCompressionType {
     /// Gzip-ed file
     GZIP,
@@ -126,7 +126,7 @@ impl FileCompressionType {
 }
 
 /// Readable file type
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Copy)]
 pub enum FileType {
     /// Apache Avro file
     AVRO,

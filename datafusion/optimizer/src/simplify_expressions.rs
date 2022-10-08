@@ -224,6 +224,18 @@ fn negate_clause(expr: Expr) -> Expr {
         Expr::IsNotNull(expr) => expr.is_null(),
         // not (A is null) ===> A is not null
         Expr::IsNull(expr) => expr.is_not_null(),
+        // not (A is not unknown) ===> A is unknown
+        Expr::IsNotUnknown(expr) => expr.is_unknown(),
+        // not (A is unknown) ===> A is not unknown
+        Expr::IsUnknown(expr) => expr.is_not_unknown(),
+        // not (A is not true) ===> A is true
+        Expr::IsNotTrue(expr) => expr.is_true(),
+        // not (A is true) ===> A is not true
+        Expr::IsTrue(expr) => expr.is_not_true(),
+        // not (A is not false) ===> A is false
+        Expr::IsNotFalse(expr) => expr.is_false(),
+        // not (A is false) ===> A is not false
+        Expr::IsFalse(expr) => expr.is_not_false(),
         // not (A not in (..)) ===> A in (..)
         // not (A in (..)) ===> A not in (..)
         Expr::InList {

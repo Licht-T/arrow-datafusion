@@ -28,6 +28,7 @@ pub mod parquet;
 
 use std::any::Any;
 use std::fmt;
+use std::str::FromStr;
 use std::sync::Arc;
 
 use crate::arrow::datatypes::SchemaRef;
@@ -38,6 +39,10 @@ use crate::physical_plan::{ExecutionPlan, Statistics};
 
 use async_trait::async_trait;
 use object_store::{ObjectMeta, ObjectStore};
+use url::Url;
+use datafusion_common::DataFusionError;
+use datafusion_common::object_store_scheme::ObjectStoreScheme;
+use crate::datasource::object_store::ObjectStoreUrl;
 
 /// This trait abstracts all the file format specific implementations
 /// from the `TableProvider`. This helps code re-utilization across
@@ -79,6 +84,15 @@ pub trait FileFormat: Send + Sync + fmt::Debug {
         conf: FileScanConfig,
         filters: &[Expr],
     ) -> Result<Arc<dyn ExecutionPlan>>;
+
+    fn is_s3_select(&self, object_store_url: &str) -> bool {
+        Url::from_str(object_store_url)
+            .map(|x| x.scheme().to_string())
+            .map_err(|e| DataFusionError::Internal("dummy".into()))
+            .and_then(|x| ObjectStoreScheme::from_str(x.as_str()))
+            .and_then(|x| Ok(x == ObjectStoreScheme::S3SELECT))
+            .unwrap_or(false)
+    }
 }
 
 #[cfg(test)]

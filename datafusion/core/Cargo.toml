@@ -59,6 +59,9 @@ apache-avro = { version = "0.14", optional = true }
 arrow = { version = "23.0.0", features = ["prettyprint"] }
 async-compression = { version = "0.3.14", features = ["bzip2", "gzip", "futures-io", "tokio"] }
 async-trait = "0.1.41"
+aws-config = "0.49.0"
+aws-sdk-s3 = "0.19.0"
+bstr = "1.0.1"
 bytes = "1.1"
 bzip2 = "0.4.3"
 chrono = { version = "0.4", default-features = false }
@@ -73,6 +76,7 @@ flate2 = "1.0.24"
 futures = "0.3"
 glob = "0.3.0"
 hashbrown = { version = "0.12", features = ["raw"] }
+http-body = "0.4.5"
 itertools = "0.10"
 lazy_static = { version = "^1.4.0" }
 log = "^0.4"
