@@ -296,8 +296,6 @@ impl FileOpener for S3SelectOpener {
             })?
             .to_string();
 
-        let err_msg = "Unable to parse S3 path";
-
         let (bucket, key) = self.get_s3_bucket_and_key(&file_meta)?;
         let sql = self.generate_sql();
 
@@ -394,13 +392,7 @@ impl FileOpener for S3SelectOpener {
                                 ScanRange::builder().start(start).end(end).build(),
                             )
                             .customize()
-                            .await
-                            .map_err(|e| {
-                                DataFusionError::Execution(format!(
-                                    "Failed to execute S3 Select: {}",
-                                    e
-                                ))
-                            })?;
+                            .await?;
 
                         // FIXME: Due to the bug of AWS SDK, a zero-start range doesn't work.
                         //        When zero-start, we rewrite the dummy value `-1`
@@ -420,52 +412,39 @@ impl FileOpener for S3SelectOpener {
 
                         println!("{:?}", request.request());
 
-                        let mut select_object_content =
-                            request.send().await.map_err(|e| {
-                                DataFusionError::Execution(format!(
-                                    "Failed to execute S3 Select: {}",
-                                    e
-                                ))
-                            })?;
+                        let mut response = request.send().await?;
 
-                        while let stream = {
-                            select_object_content
-                                .payload
-                                .recv()
-                                .await
-                                .map_err(|e| {
-                                    DataFusionError::Execution(format!(
-                                        "{}: {}",
-                                        err_msg, e
-                                    ))
-                                })?
-                                .ok_or(DataFusionError::Execution(format!(
-                                    "1: {}",
-                                    err_msg
-                                )))?
-                        } {
-                            if let SelectObjectContentEventStream::Records(v) = stream {
-                                let records = v
-                                    .payload
-                                    .ok_or(DataFusionError::Execution(format!(
-                                        "2: {}",
-                                        err_msg
-                                    )))?
-                                    .into_inner();
+                        loop {
+                            let stream = response.payload.recv().await?;
+
+                            let err = DataFusionError::Execution(
+                                "Unable to retrieve S3 Select response payloads".into(),
+                            );
+
+                            if let Some(SelectObjectContentEventStream::Records(v)) =
+                                stream
+                            {
+                                let records = v.payload.ok_or(err)?.into_inner();
                                 cursor = Box::new(cursor.chain(Cursor::new(records)));
-                            } else if let SelectObjectContentEventStream::Stats(v) =
+                            } else if let Some(SelectObjectContentEventStream::Stats(_)) =
                                 stream
                             {
-                                println!("{:?}", v);
-                            } else if let SelectObjectContentEventStream::Cont(v) = stream
-                            {
-                                println!("{:?}", v);
-                            } else if let SelectObjectContentEventStream::Progress(v) =
+                                continue;
+                            } else if let Some(SelectObjectContentEventStream::Cont(_)) =
                                 stream
                             {
-                                println!("{:?}", v);
-                            } else {
+                                continue;
+                            } else if let Some(
+                                SelectObjectContentEventStream::Progress(_),
+                            ) = stream
+                            {
+                                continue;
+                            } else if let Some(SelectObjectContentEventStream::End(_)) =
+                                stream
+                            {
                                 break;
+                            } else {
+                                Err(err)?
                             }
                         }
                         Ok::<Box<dyn Read + Send>, DataFusionError>(cursor)

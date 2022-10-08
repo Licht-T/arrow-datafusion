@@ -18,6 +18,7 @@
 //! DataFusion error types
 
 use std::error;
+use std::error::Error;
 use std::fmt::{Display, Formatter};
 use std::io;
 use std::result;
@@ -54,7 +55,6 @@ pub enum DataFusionError {
     ObjectStore(object_store::Error),
     /// Error associated to I/O operations and associated traits.
     IoError(io::Error),
-    TokioJoinError(tokio::task::JoinError),
     /// Error returned when SQL is syntactically incorrect.
     SQL(ParserError),
     /// Error returned on a branch that we know it is possible
@@ -197,7 +197,16 @@ impl Display for SchemaError {
 
 impl From<tokio::task::JoinError> for DataFusionError {
     fn from(e: tokio::task::JoinError) -> Self {
-        DataFusionError::TokioJoinError(e)
+        DataFusionError::IoError(e.into())
+    }
+}
+
+impl<E, M> From<aws_smithy_http::result::SdkError<E, M>> for DataFusionError
+where
+    E: Error,
+{
+    fn from(e: aws_smithy_http::result::SdkError<E, M>) -> Self {
+        DataFusionError::Internal(format!("AWS SDK Error: {}", e))
     }
 }
 
@@ -283,7 +292,6 @@ impl Display for DataFusionError {
                 write!(f, "Avro error: {}", desc)
             }
             DataFusionError::IoError(ref desc) => write!(f, "IO error: {}", desc),
-            DataFusionError::TokioJoinError(ref desc) => write!(f, "IO error: {}", desc),
             DataFusionError::SQL(ref desc) => {
                 write!(f, "SQL error: {:?}", desc)
             }
