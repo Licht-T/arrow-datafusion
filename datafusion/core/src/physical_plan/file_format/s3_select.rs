@@ -247,7 +247,7 @@ impl S3SelectOpener {
         let bucket = Url::from_str(self.object_store_url.as_str())
             .map_err(|_| DataFusionError::Execution(err_msg.to_owned()))?
             .host_str()
-            .ok_or(DataFusionError::Execution(err_msg.to_owned()))?
+            .ok_or_else(|| DataFusionError::Execution(err_msg.to_owned()))?
             .to_owned();
 
         Ok((bucket, key))
