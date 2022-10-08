@@ -18,10 +18,10 @@
 //! Execution plan for reading files by S3 Select
 use crate::datasource::file_format::file_type::{FileCompressionType, FileType};
 use crate::error::{DataFusionError, Result};
-use crate::execution::context::SessionState;
+
 use crate::execution::context::TaskContext;
 use crate::physical_plan::expressions::PhysicalSortExpr;
-use crate::physical_plan::file_format::delimited_stream::newline_delimited_stream;
+
 use crate::physical_plan::file_format::file_stream::{
     FileOpenFuture, FileOpener, FileStream,
 };
@@ -35,8 +35,8 @@ use arrow::{datatypes::SchemaRef, json};
 
 use bytes::Buf;
 
-use crate::datasource::file_format::csv::CsvFormat;
-use aws_config::meta::region::RegionProviderChain;
+
+
 use aws_sdk_s3::model::{
     CompressionType, CsvInput, ExpressionType, FileHeaderInfo, InputSerialization,
     JsonInput, JsonOutput, JsonType, OutputSerialization, ParquetInput, ScanRange,
@@ -45,25 +45,25 @@ use aws_sdk_s3::model::{
 use bstr::ByteSlice;
 use datafusion_expr::expr::generate_where_condition;
 use datafusion_expr::Expr;
-use futures::stream::FuturesUnordered;
+
 use futures::{FutureExt, StreamExt, TryFutureExt, TryStreamExt};
 use http_body::Body;
 use itertools::Itertools;
-use object_store::{GetResult, ObjectStore};
+use object_store::{ObjectStore};
 use parquet::data_type::AsBytes;
-use paste::expr;
+
 use std::any::Any;
-use std::borrow::BorrowMut;
+
 use std::cmp::{max, min};
-use std::fs;
-use std::future::Future;
-use std::io::{Cursor, ErrorKind, Read};
-use std::path::Path;
-use std::pin::Pin;
+
+
+use std::io::{Cursor, Read};
+
+
 use std::str::FromStr;
-use std::sync::{mpsc, Arc};
-use std::time::Duration;
-use tokio::task::{self, JoinHandle};
+use std::sync::{Arc};
+
+
 use url::Url;
 
 use super::FileScanConfig;
@@ -255,7 +255,7 @@ impl S3SelectOpener {
                 .iter()
                 .enumerate()
                 .map(|(i, v)| {
-                    format!("s.\"_{}\" AS \"{}\"", i + 1, v.name().replace("\"", "\"\""))
+                    format!("s.\"_{}\" AS \"{}\"", i + 1, v.name().replace('\"', "\"\""))
                 })
                 .join(", "),
             true => "*".to_string(),
@@ -274,9 +274,9 @@ impl FileOpener for S3SelectOpener {
         let file_size = file_meta.object_meta.size;
         let options = self.options.clone();
         let schema = self.file_schema.clone();
-        let file_type = self.file_type.clone();
-        let file_compression_type = self.file_compression_type.clone();
-        let has_header = self.has_header.clone();
+        let file_type = self.file_type;
+        let file_compression_type = self.file_compression_type;
+        let has_header = self.has_header;
         let chunk_size = self.chunk_size;
         let buffer_size = self.buffer_size;
         let delimiter = std::str::from_utf8(self.delimiter.as_bytes())

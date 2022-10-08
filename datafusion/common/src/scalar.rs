@@ -768,8 +768,8 @@ impl ScalarValue {
             ScalarValue::IntervalYearMonth(_) => ScalarValueGroup::Interval,
             ScalarValue::IntervalDayTime(_) => ScalarValueGroup::Interval,
             ScalarValue::IntervalMonthDayNano(_) => ScalarValueGroup::Interval,
-            ScalarValue::Struct(_, fields) => ScalarValueGroup::Struct,
-            ScalarValue::Dictionary(k, v) => ScalarValueGroup::Dictionary,
+            ScalarValue::Struct(_, _fields) => ScalarValueGroup::Struct,
+            ScalarValue::Dictionary(_k, _v) => ScalarValueGroup::Dictionary,
             ScalarValue::Null => ScalarValueGroup::Null,
         }
     }

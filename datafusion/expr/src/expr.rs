@@ -25,7 +25,7 @@ use crate::window_function;
 use crate::AggregateUDF;
 use crate::Operator;
 use crate::ScalarUDF;
-use crate::{aggregate_function, ExprSchemable};
+use crate::{aggregate_function};
 use arrow::datatypes::{DataType, Field};
 use chrono::{SecondsFormat, TimeZone, Utc};
 use chrono_tz::Tz;
@@ -34,7 +34,7 @@ use datafusion_common::Result;
 use datafusion_common::{plan_err, Column};
 use datafusion_common::{DataFusionError, ScalarValue};
 use std::fmt;
-use std::fmt::{Error, Write};
+use std::fmt::{Write};
 use std::hash::{BuildHasher, Hash, Hasher};
 use std::ops::Not;
 use std::sync::Arc;
@@ -889,7 +889,7 @@ pub fn bar(scalar_value: &ScalarValue) -> Result<String> {
         ScalarValueGroup::UInt => Ok(scalar_value.to_string()),
         ScalarValueGroup::Utf8 => match scalar_value {
             ScalarValue::Utf8(Some(v)) | ScalarValue::LargeUtf8(Some(v)) => {
-                Ok(format!("'{}'", v.replace("'", "''")))
+                Ok(format!("'{}'", v.replace('\'', "''")))
             }
             _ => Ok(scalar_value.to_string()),
         },
@@ -1005,7 +1005,7 @@ fn _generate_where_condition(
         Expr::Column(c) => {
             let field = fields
                 .iter()
-                .find(|x| x.name().to_owned() == c.name)
+                .find(|x| *x.name() == c.name)
                 .ok_or(DataFusionError::Execution(format!(
                     "Unknown field name: {}",
                     c.name
@@ -1016,7 +1016,7 @@ fn _generate_where_condition(
                 true => c.name.replace("column", ""),
                 false => c.name.to_owned(),
             }
-            .replace("\"", "\"\"");
+            .replace('\"', "\"\"");
 
             Ok(format!("CAST(s.\"{}\" AS {})", name, data_type))
         }
