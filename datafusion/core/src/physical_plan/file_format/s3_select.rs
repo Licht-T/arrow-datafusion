@@ -35,8 +35,6 @@ use arrow::{datatypes::SchemaRef, json};
 
 use bytes::Buf;
 
-
-
 use aws_sdk_s3::model::{
     CompressionType, CsvInput, ExpressionType, FileHeaderInfo, InputSerialization,
     JsonInput, JsonOutput, JsonType, OutputSerialization, ParquetInput, ScanRange,
@@ -49,20 +47,17 @@ use datafusion_expr::Expr;
 use futures::{FutureExt, StreamExt, TryFutureExt, TryStreamExt};
 use http_body::Body;
 use itertools::Itertools;
-use object_store::{ObjectStore};
+use object_store::ObjectStore;
 use parquet::data_type::AsBytes;
 
 use std::any::Any;
 
 use std::cmp::{max, min};
 
-
 use std::io::{Cursor, Read};
 
-
 use std::str::FromStr;
-use std::sync::{Arc};
-
+use std::sync::Arc;
 
 use url::Url;
 

@@ -30,12 +30,8 @@ use arrow::json::reader::ValueIter;
 use async_trait::async_trait;
 use bytes::Buf;
 
-
-
-
 use datafusion_expr::combine_filters;
 use object_store::{GetResult, ObjectMeta, ObjectStore};
-
 
 use super::FileFormat;
 use super::FileScanConfig;

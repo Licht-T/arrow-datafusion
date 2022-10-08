@@ -37,7 +37,6 @@ use crate::logical_plan::Expr;
 use crate::physical_plan::file_format::FileScanConfig;
 use crate::physical_plan::{ExecutionPlan, Statistics};
 
-
 use async_trait::async_trait;
 use datafusion_common::object_store_scheme::ObjectStoreScheme;
 use datafusion_common::DataFusionError;
@@ -89,7 +88,8 @@ pub trait FileFormat: Send + Sync + fmt::Debug {
         Url::from_str(object_store_url)
             .map(|x| x.scheme().to_string())
             .map_err(|_e| DataFusionError::Internal("dummy".into()))
-            .and_then(|x| ObjectStoreScheme::from_str(x.as_str())).map(|x| x == ObjectStoreScheme::S3SELECT)
+            .and_then(|x| ObjectStoreScheme::from_str(x.as_str()))
+            .map(|x| x == ObjectStoreScheme::S3SELECT)
             .unwrap_or(false)
     }
 }

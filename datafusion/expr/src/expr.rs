@@ -17,6 +17,7 @@
 
 //! Expr module contains core type definition for `Expr`.
 
+use crate::aggregate_function;
 use crate::built_in_function;
 use crate::expr_fn::binary_expr;
 use crate::logical_plan::Subquery;
@@ -25,7 +26,6 @@ use crate::window_function;
 use crate::AggregateUDF;
 use crate::Operator;
 use crate::ScalarUDF;
-use crate::{aggregate_function};
 use arrow::datatypes::{DataType, Field};
 use chrono::{SecondsFormat, TimeZone, Utc};
 use chrono_tz::Tz;
@@ -34,7 +34,7 @@ use datafusion_common::Result;
 use datafusion_common::{plan_err, Column};
 use datafusion_common::{DataFusionError, ScalarValue};
 use std::fmt;
-use std::fmt::{Write};
+use std::fmt::Write;
 use std::hash::{BuildHasher, Hash, Hasher};
 use std::ops::Not;
 use std::sync::Arc;
@@ -1003,13 +1003,9 @@ fn _generate_where_condition(
 ) -> Result<String> {
     match expr {
         Expr::Column(c) => {
-            let field = fields
-                .iter()
-                .find(|x| *x.name() == c.name)
-                .ok_or(DataFusionError::Execution(format!(
-                    "Unknown field name: {}",
-                    c.name
-                )))?;
+            let field = fields.iter().find(|x| *x.name() == c.name).ok_or(
+                DataFusionError::Execution(format!("Unknown field name: {}", c.name)),
+            )?;
             let data_type = foo(field.data_type())?;
 
             let name = match anonymous_field_name {
