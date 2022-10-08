@@ -38,7 +38,7 @@ use aws_sdk_s3::model::{
     JsonInput, JsonOutput, JsonType, OutputSerialization, ParquetInput, ScanRange,
     SelectObjectContentEventStream,
 };
-use datafusion_expr::expr::generate_where_condition;
+use datafusion_expr::expr::generate_s3_select_where_condition;
 use datafusion_expr::Expr;
 
 use futures::{StreamExt, TryStreamExt};
@@ -254,7 +254,7 @@ impl S3SelectOpener {
     }
 
     fn generate_sql(&self) -> String {
-        let cond = generate_where_condition(
+        let cond = generate_s3_select_where_condition(
             self.predicate.as_ref(),
             self.file_schema.fields.as_ref(),
             self.file_type == FileType::CSV && !self.has_header,

@@ -851,7 +851,7 @@ impl fmt::Debug for Expr {
     }
 }
 
-pub fn foo(data_type: &DataType) -> Result<String> {
+pub fn map_to_s3_select_data_type(data_type: &DataType) -> Result<String> {
     match data_type {
         DataType::Null => Ok("NULL".into()),
         DataType::Boolean => Ok("BOOL".into()),
@@ -875,7 +875,7 @@ pub fn foo(data_type: &DataType) -> Result<String> {
     }
 }
 
-pub fn bar(scalar_value: &ScalarValue) -> Result<String> {
+pub fn rewrite_to_s3_select_scalar_value(scalar_value: &ScalarValue) -> Result<String> {
     match scalar_value.get_scalar_value_group() {
         ScalarValueGroup::Null => Ok(scalar_value.to_string()),
         ScalarValueGroup::Boolean => Ok(scalar_value.to_string()),
@@ -981,7 +981,7 @@ pub fn bar(scalar_value: &ScalarValue) -> Result<String> {
     }
 }
 
-pub fn generate_where_condition(
+pub fn generate_s3_select_where_condition(
     expr: Option<&Expr>,
     fields: &Vec<Field>,
     anonymous_field_name: bool,
@@ -989,14 +989,14 @@ pub fn generate_where_condition(
     match expr {
         Some(expr) => format!(
             "WHERE {}",
-            _generate_where_condition(expr, fields, anonymous_field_name,)
+            _generate_s3_select_where_condition(expr, fields, anonymous_field_name,)
                 .unwrap_or_else(|_| "TRUE".to_string())
         ),
         None => "".to_string(),
     }
 }
 
-fn _generate_where_condition(
+fn _generate_s3_select_where_condition(
     expr: &Expr,
     fields: &Vec<Field>,
     anonymous_field_name: bool,
@@ -1006,7 +1006,7 @@ fn _generate_where_condition(
             let field = fields.iter().find(|x| *x.name() == c.name).ok_or_else(|| {
                 DataFusionError::Execution(format!("Unknown field name: {}", c.name))
             })?;
-            let data_type = foo(field.data_type())?;
+            let data_type = map_to_s3_select_data_type(field.data_type())?;
 
             let name = match anonymous_field_name {
                 true => c.name.replace("column", ""),
@@ -1016,7 +1016,7 @@ fn _generate_where_condition(
 
             Ok(format!("CAST(s.\"{}\" AS {})", name, data_type))
         }
-        Expr::Literal(v) => bar(v),
+        Expr::Literal(v) => rewrite_to_s3_select_scalar_value(v),
         Expr::Case {
             expr,
             when_then_expr,
@@ -1025,16 +1025,20 @@ fn _generate_where_condition(
         } => {
             let mut name = "CASE ".to_string();
             if let Some(e) = expr {
-                let e = _generate_where_condition(e, fields, anonymous_field_name)?;
+                let e =
+                    _generate_s3_select_where_condition(e, fields, anonymous_field_name)?;
                 let _ = write!(name, "{} ", e);
             }
             for (w, t) in when_then_expr {
-                let when = _generate_where_condition(w, fields, anonymous_field_name)?;
-                let then = _generate_where_condition(t, fields, anonymous_field_name)?;
+                let when =
+                    _generate_s3_select_where_condition(w, fields, anonymous_field_name)?;
+                let then =
+                    _generate_s3_select_where_condition(t, fields, anonymous_field_name)?;
                 let _ = write!(name, "WHEN {} THEN {} ", when, then);
             }
             if let Some(e) = else_expr {
-                let e = _generate_where_condition(e, fields, anonymous_field_name)?;
+                let e =
+                    _generate_s3_select_where_condition(e, fields, anonymous_field_name)?;
                 let _ = write!(name, "ELSE {} ", e);
             }
             name += "END";
@@ -1042,62 +1046,64 @@ fn _generate_where_condition(
         }
         Expr::Cast { expr, data_type } => Ok(format!(
             "CAST({} AS {})",
-            _generate_where_condition(expr, fields, anonymous_field_name)?,
-            foo(data_type)?
+            _generate_s3_select_where_condition(expr, fields, anonymous_field_name)?,
+            map_to_s3_select_data_type(data_type)?
         )),
         Expr::Not(expr) => Ok(format!(
             "NOT {}",
-            _generate_where_condition(expr, fields, anonymous_field_name)?
+            _generate_s3_select_where_condition(expr, fields, anonymous_field_name)?
         )),
         Expr::Negative(expr) => Ok(format!(
             "(- {})",
-            _generate_where_condition(expr, fields, anonymous_field_name)?
+            _generate_s3_select_where_condition(expr, fields, anonymous_field_name)?
         )),
         Expr::IsNull(expr) => Ok(format!(
             "{} IS NULL",
-            _generate_where_condition(expr, fields, anonymous_field_name)?
+            _generate_s3_select_where_condition(expr, fields, anonymous_field_name)?
         )),
         Expr::IsNotNull(expr) => Ok(format!(
             "{} IS NOT NULL",
-            _generate_where_condition(expr, fields, anonymous_field_name)?
+            _generate_s3_select_where_condition(expr, fields, anonymous_field_name)?
         )),
         Expr::IsUnknown(expr) => Ok(format!(
             "{} IS NULL",
-            _generate_where_condition(expr, fields, anonymous_field_name)?
+            _generate_s3_select_where_condition(expr, fields, anonymous_field_name)?
         )),
         Expr::IsNotUnknown(expr) => Ok(format!(
             "{} IS NOT NULL",
-            _generate_where_condition(expr, fields, anonymous_field_name)?
+            _generate_s3_select_where_condition(expr, fields, anonymous_field_name)?
         )),
         Expr::IsTrue(expr) => Ok(format!(
             "{} IS TRUE",
-            _generate_where_condition(expr, fields, anonymous_field_name)?
+            _generate_s3_select_where_condition(expr, fields, anonymous_field_name)?
         )),
         Expr::IsFalse(expr) => Ok(format!(
             "{} IS FALSE",
-            _generate_where_condition(expr, fields, anonymous_field_name)?
+            _generate_s3_select_where_condition(expr, fields, anonymous_field_name)?
         )),
         Expr::IsNotTrue(expr) => Ok(format!(
             "{} IS NOT TRUE",
-            _generate_where_condition(expr, fields, anonymous_field_name)?
+            _generate_s3_select_where_condition(expr, fields, anonymous_field_name)?
         )),
         Expr::IsNotFalse(expr) => Ok(format!(
             "{} IS NOT FALSE",
-            _generate_where_condition(expr, fields, anonymous_field_name)?
+            _generate_s3_select_where_condition(expr, fields, anonymous_field_name)?
         )),
         Expr::BinaryExpr { left, op, right } => {
             let is_boolean_op = matches!(op, Operator::And | Operator::Or);
 
-            let left = _generate_where_condition(left, fields, anonymous_field_name)
-                .or_else(|e| match is_boolean_op {
+            let left =
+                _generate_s3_select_where_condition(left, fields, anonymous_field_name)
+                    .or_else(|e| match is_boolean_op {
                     true => Ok("TRUE".to_string()),
                     false => Err(e),
                 })?;
-            let right = _generate_where_condition(right, fields, anonymous_field_name)
-                .or_else(|e| match is_boolean_op {
-                    true => Ok("TRUE".to_string()),
-                    false => Err(e),
-                })?;
+            let right =
+                _generate_s3_select_where_condition(right, fields, anonymous_field_name)
+                    .or_else(|e| match is_boolean_op {
+                        true => Ok("TRUE".to_string()),
+                        false => Err(e),
+                    })?;
 
             Ok(format!("{} {} {}", left, op, right))
         }
@@ -1110,16 +1116,40 @@ fn _generate_where_condition(
             if *negated {
                 Ok(format!(
                     "{} NOT BETWEEN {} AND {}",
-                    _generate_where_condition(expr, fields, anonymous_field_name)?,
-                    _generate_where_condition(low, fields, anonymous_field_name)?,
-                    _generate_where_condition(low, fields, anonymous_field_name)?
+                    _generate_s3_select_where_condition(
+                        expr,
+                        fields,
+                        anonymous_field_name
+                    )?,
+                    _generate_s3_select_where_condition(
+                        low,
+                        fields,
+                        anonymous_field_name
+                    )?,
+                    _generate_s3_select_where_condition(
+                        low,
+                        fields,
+                        anonymous_field_name
+                    )?
                 ))
             } else {
                 Ok(format!(
                     "{} BETWEEN {} AND {}",
-                    _generate_where_condition(expr, fields, anonymous_field_name)?,
-                    _generate_where_condition(low, fields, anonymous_field_name)?,
-                    _generate_where_condition(high, fields, anonymous_field_name)?
+                    _generate_s3_select_where_condition(
+                        expr,
+                        fields,
+                        anonymous_field_name
+                    )?,
+                    _generate_s3_select_where_condition(
+                        low,
+                        fields,
+                        anonymous_field_name
+                    )?,
+                    _generate_s3_select_where_condition(
+                        high,
+                        fields,
+                        anonymous_field_name
+                    )?
                 ))
             }
         }
