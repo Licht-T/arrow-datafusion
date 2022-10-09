@@ -38,7 +38,7 @@ use aws_sdk_s3::model::{
     JsonInput, JsonOutput, JsonType, OutputSerialization, ParquetInput, ScanRange,
     SelectObjectContentEventStream,
 };
-use datafusion_expr::expr::generate_s3_select_where_condition;
+use datafusion_expr::expr_s3_select::generate_s3_select_where_condition;
 use datafusion_expr::Expr;
 
 use futures::{StreamExt, TryStreamExt};
@@ -254,13 +254,15 @@ impl S3SelectOpener {
     }
 
     fn generate_sql(&self) -> String {
+        let anonymous_field_name = self.file_type == FileType::CSV && !self.has_header;
+
         let cond = generate_s3_select_where_condition(
             self.predicate.as_ref(),
             self.file_schema.fields.as_ref(),
-            self.file_type == FileType::CSV && !self.has_header,
+            anonymous_field_name,
         );
-        let fields = match self.has_header {
-            false => self
+        let fields = match anonymous_field_name {
+            true => self
                 .file_schema
                 .fields
                 .iter()
@@ -269,7 +271,7 @@ impl S3SelectOpener {
                     format!("s.\"_{}\" AS \"{}\"", i + 1, v.name().replace('\"', "\"\""))
                 })
                 .join(", "),
-            true => "*".to_string(),
+            false => "*".to_string(),
         };
 
         format!("SELECT {} FROM s3object s {}", fields, cond)
@@ -409,8 +411,6 @@ impl FileOpener for S3SelectOpener {
                                 })
                             }))
                         })?;
-
-                        println!("{:?}", request.request());
 
                         let mut response = request.send().await?;
 

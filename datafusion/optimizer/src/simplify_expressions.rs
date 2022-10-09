@@ -2281,6 +2281,96 @@ mod tests {
     }
 
     #[test]
+    fn simplify_not_unknown() {
+        let table_scan = test_table_scan();
+
+        let plan = LogicalPlanBuilder::from(table_scan)
+            .filter(col("d").is_unknown().not())
+            .unwrap()
+            .build()
+            .unwrap();
+        let expected = "Filter: #test.d IS NOT UNKNOWN AS NOT test.d IS UNKNOWN\
+        \n  TableScan: test";
+
+        assert_optimized_plan_eq(&plan, expected);
+    }
+
+    #[test]
+    fn simplify_not_not_unkonwn() {
+        let table_scan = test_table_scan();
+
+        let plan = LogicalPlanBuilder::from(table_scan)
+            .filter(col("d").is_not_unknown().not())
+            .unwrap()
+            .build()
+            .unwrap();
+        let expected = "Filter: #test.d IS UNKNOWN AS NOT test.d IS NOT UNKNOWN\
+        \n  TableScan: test";
+
+        assert_optimized_plan_eq(&plan, expected);
+    }
+
+    #[test]
+    fn simplify_not_true() {
+        let table_scan = test_table_scan();
+
+        let plan = LogicalPlanBuilder::from(table_scan)
+            .filter(col("d").is_true().not())
+            .unwrap()
+            .build()
+            .unwrap();
+        let expected = "Filter: #test.d IS NOT TRUE AS NOT test.d IS TRUE\
+        \n  TableScan: test";
+
+        assert_optimized_plan_eq(&plan, expected);
+    }
+
+    #[test]
+    fn simplify_not_not_true() {
+        let table_scan = test_table_scan();
+
+        let plan = LogicalPlanBuilder::from(table_scan)
+            .filter(col("d").is_not_true().not())
+            .unwrap()
+            .build()
+            .unwrap();
+        let expected = "Filter: #test.d IS TRUE AS NOT test.d IS NOT TRUE\
+        \n  TableScan: test";
+
+        assert_optimized_plan_eq(&plan, expected);
+    }
+
+    #[test]
+    fn simplify_not_false() {
+        let table_scan = test_table_scan();
+
+        let plan = LogicalPlanBuilder::from(table_scan)
+            .filter(col("d").is_false().not())
+            .unwrap()
+            .build()
+            .unwrap();
+        let expected = "Filter: #test.d IS NOT FALSE AS NOT test.d IS FALSE\
+        \n  TableScan: test";
+
+        assert_optimized_plan_eq(&plan, expected);
+    }
+
+    #[test]
+    fn simplify_not_not_false() {
+        let table_scan = test_table_scan();
+
+        let plan = LogicalPlanBuilder::from(table_scan)
+            .filter(col("d").is_not_false().not())
+            .unwrap()
+            .build()
+            .unwrap();
+        let expected = "Filter: #test.d IS FALSE AS NOT test.d IS NOT FALSE\
+        \n  TableScan: test";
+
+        assert_optimized_plan_eq(&plan, expected);
+    }
+
+    #[test]
     fn simplify_not_in() {
         let table_scan = test_table_scan();
 

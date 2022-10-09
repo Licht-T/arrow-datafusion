@@ -18,8 +18,8 @@
 use datafusion::error::Result;
 use std::{env, str::FromStr, sync::Arc};
 
-use datafusion::{datasource::object_store::ObjectStoreProvider, error::DataFusionError};
 use datafusion::common::object_store_scheme::ObjectStoreScheme;
+use datafusion::{datasource::object_store::ObjectStoreProvider, error::DataFusionError};
 use object_store::{aws::AmazonS3Builder, gcp::GoogleCloudStorageBuilder};
 use url::Url;
 
@@ -30,7 +30,9 @@ pub struct DatafusionCliObjectStoreProvider {}
 impl ObjectStoreProvider for DatafusionCliObjectStoreProvider {
     fn get_by_url(&self, url: &Url) -> Result<Arc<dyn object_store::ObjectStore>> {
         ObjectStoreScheme::from_str(url.scheme()).map(|scheme| match scheme {
-            ObjectStoreScheme::S3 | ObjectStoreScheme::S3SELECT => build_s3_object_store(url),
+            ObjectStoreScheme::S3 | ObjectStoreScheme::S3SELECT => {
+                build_s3_object_store(url)
+            }
             ObjectStoreScheme::GCS => build_gcs_object_store(url),
         })?
     }
