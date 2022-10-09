@@ -167,7 +167,6 @@ fn _generate_s3_select_where_condition(
     fields: &Vec<Field>,
     anonymous_field_name: bool,
 ) -> datafusion_common::Result<String> {
-    // FIXME: Support `IN`
     match expr {
         Expr::Column(c) => {
             let field = fields.iter().find(|x| *x.name() == c.name).ok_or_else(|| {
