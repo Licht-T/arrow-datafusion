@@ -26,10 +26,8 @@ use crate::window_function;
 use crate::AggregateUDF;
 use crate::Operator;
 use crate::ScalarUDF;
-use arrow::datatypes::{DataType, Field};
-use chrono::{SecondsFormat, TimeZone, Utc};
-use chrono_tz::Tz;
-use datafusion_common::scalar::ScalarValueGroup;
+use arrow::datatypes::DataType;
+
 use datafusion_common::Result;
 use datafusion_common::{plan_err, Column};
 use datafusion_common::{DataFusionError, ScalarValue};

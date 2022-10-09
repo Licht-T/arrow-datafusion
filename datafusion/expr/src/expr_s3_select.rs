@@ -373,13 +373,13 @@ fn _generate_s3_select_where_condition(
 
 #[cfg(test)]
 mod test {
-    use crate::expr_fn::col;
+
     use crate::expr_s3_select::{
         generate_s3_select_where_condition, to_s3_select_literal,
     };
-    use crate::{case, lit, BuiltinScalarFunction, Expr, Operator};
+    use crate::{BuiltinScalarFunction, Expr, Operator};
     use arrow::datatypes::{DataType, Field};
-    use datafusion_common::{Column, Result, ScalarValue};
+    use datafusion_common::{Column, ScalarValue};
 
     #[test]
     fn scalar_value_rewrite() {
@@ -780,16 +780,14 @@ mod test {
         // Expr::BinaryExpr with Unsupported type/operation
         // (ABS(-1) = 1) OR CAST((unsupported <> unsupported) AS BOOL)
         let expr = Expr::BinaryExpr {
-            left: Box::new(
-                Expr::BinaryExpr {
-                    left: Box::new(Expr::ScalarFunction {
-                        fun: BuiltinScalarFunction::Abs,
-                        args: vec![Expr::Literal(ScalarValue::Int64(Some(-1)))],
-                    }),
-                    op: Operator::Eq,
-                    right: Box::new(Expr::Literal(ScalarValue::Int64(Some(1))))
-                }
-            ),
+            left: Box::new(Expr::BinaryExpr {
+                left: Box::new(Expr::ScalarFunction {
+                    fun: BuiltinScalarFunction::Abs,
+                    args: vec![Expr::Literal(ScalarValue::Int64(Some(-1)))],
+                }),
+                op: Operator::Eq,
+                right: Box::new(Expr::Literal(ScalarValue::Int64(Some(1)))),
+            }),
             op: Operator::And,
             right: Box::new(Expr::Cast {
                 expr: Box::new(Expr::BinaryExpr {
