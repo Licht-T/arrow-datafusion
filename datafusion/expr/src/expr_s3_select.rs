@@ -620,7 +620,7 @@ mod test {
             ),
         ];
 
-        // Nothing.
+        // Nothing
         assert_eq!(generate_s3_select_where_condition(None, &fields, false), "");
 
         // Expr::Column
@@ -777,7 +777,65 @@ mod test {
         );
 
         // Expr::BinaryExpr with Unsupported type/operation
-        // (ABS(-1) = 1) OR CAST((unsupported <> unsupported) AS BOOL)
+        // ABS(-1) = 1
+        let expr = Box::new(Expr::BinaryExpr {
+            left: Box::new(Expr::ScalarFunction {
+                fun: BuiltinScalarFunction::Abs,
+                args: vec![Expr::Literal(ScalarValue::Int64(Some(-1)))],
+            }),
+            op: Operator::Eq,
+            right: Box::new(Expr::Literal(ScalarValue::Int64(Some(1)))),
+        });
+        assert_eq!(
+            generate_s3_select_where_condition(Some(&expr), &fields, false),
+            "WHERE TRUE"
+        );
+        // NOT (ABS(-1) = 1)
+        let expr = Box::new(Expr::Not(Box::new(Expr::BinaryExpr {
+            left: Box::new(Expr::ScalarFunction {
+                fun: BuiltinScalarFunction::Abs,
+                args: vec![Expr::Literal(ScalarValue::Int64(Some(-1)))],
+            }),
+            op: Operator::Eq,
+            right: Box::new(Expr::Literal(ScalarValue::Int64(Some(1)))),
+        })));
+        assert_eq!(
+            generate_s3_select_where_condition(Some(&expr), &fields, false),
+            "WHERE TRUE"
+        );
+        // unsupported <> unsupported
+        let expr = Box::new(Expr::BinaryExpr {
+            left: Box::new(Expr::Column(Column {
+                relation: None,
+                name: "unsupported".into(),
+            })),
+            op: Operator::NotEq,
+            right: Box::new(Expr::Column(Column {
+                relation: None,
+                name: "unsupported".into(),
+            })),
+        });
+        assert_eq!(
+            generate_s3_select_where_condition(Some(&expr), &fields, false),
+            "WHERE TRUE"
+        );
+        // NOT (unsupported <> unsupported)
+        let expr = Box::new(Expr::Not(Box::new(Expr::BinaryExpr {
+            left: Box::new(Expr::Column(Column {
+                relation: None,
+                name: "unsupported".into(),
+            })),
+            op: Operator::NotEq,
+            right: Box::new(Expr::Column(Column {
+                relation: None,
+                name: "unsupported".into(),
+            })),
+        })));
+        assert_eq!(
+            generate_s3_select_where_condition(Some(&expr), &fields, false),
+            "WHERE TRUE"
+        );
+        // (ABS(-1) = 1) AND CAST((unsupported <> unsupported) AS BOOL)
         let expr = Expr::BinaryExpr {
             left: Box::new(Expr::BinaryExpr {
                 left: Box::new(Expr::ScalarFunction {
@@ -802,6 +860,36 @@ mod test {
                 }),
                 data_type: DataType::Boolean,
             }),
+        };
+        assert_eq!(
+            generate_s3_select_where_condition(Some(&expr), &fields, false),
+            "WHERE TRUE AND TRUE"
+        );
+        // NOT (ABS(-1) = 1) AND NOT CAST((unsupported <> unsupported) AS BOOL)
+        let expr = Expr::BinaryExpr {
+            left: Box::new(Expr::Not(Box::new(Expr::BinaryExpr {
+                left: Box::new(Expr::ScalarFunction {
+                    fun: BuiltinScalarFunction::Abs,
+                    args: vec![Expr::Literal(ScalarValue::Int64(Some(-1)))],
+                }),
+                op: Operator::Eq,
+                right: Box::new(Expr::Literal(ScalarValue::Int64(Some(1)))),
+            }))),
+            op: Operator::And,
+            right: Box::new(Expr::Not(Box::new(Expr::Cast {
+                expr: Box::new(Expr::BinaryExpr {
+                    left: Box::new(Expr::Column(Column {
+                        relation: None,
+                        name: "unsupported".into(),
+                    })),
+                    op: Operator::NotEq,
+                    right: Box::new(Expr::Column(Column {
+                        relation: None,
+                        name: "unsupported".into(),
+                    })),
+                }),
+                data_type: DataType::Boolean,
+            }))),
         };
         assert_eq!(
             generate_s3_select_where_condition(Some(&expr), &fields, false),
