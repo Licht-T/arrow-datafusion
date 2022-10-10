@@ -45,7 +45,6 @@ pub fn to_s3_select_literal(
         ScalarValueGroup::Null => Ok(scalar_value.to_string()),
         ScalarValueGroup::Boolean => Ok(scalar_value.to_string().to_uppercase()),
         ScalarValueGroup::Float => match scalar_value {
-            // FIXME: check if it works fine
             // `CAST` a value to `FLOAT` because S3 Select tries to treat it as Decimal.
             ScalarValue::Float32(Some(v)) => Ok(format!("CAST({} AS FLOAT)", v)),
             ScalarValue::Float64(Some(v)) => Ok(format!("CAST({} AS FLOAT)", v)),
