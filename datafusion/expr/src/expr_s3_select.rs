@@ -183,26 +183,21 @@ fn _generate_s3_select_where_condition(
             Ok(format!("CAST(s.\"{}\" AS {})", name, data_type))
         }
         Expr::Literal(v) => to_s3_select_literal(v),
-        Expr::Case {
-            expr,
-            when_then_expr,
-            else_expr,
-            ..
-        } => {
+        Expr::Case(v) => {
             let mut name = "CASE ".to_string();
-            if let Some(e) = expr {
+            if let Some(e) = &v.expr {
                 let e =
                     _generate_s3_select_where_condition(e, fields, anonymous_field_name)?;
                 let _ = write!(name, "{} ", e);
             }
-            for (w, t) in when_then_expr {
+            for (w, t) in &v.when_then_expr {
                 let when =
                     _generate_s3_select_where_condition(w, fields, anonymous_field_name)?;
                 let then =
                     _generate_s3_select_where_condition(t, fields, anonymous_field_name)?;
                 let _ = write!(name, "WHEN {} THEN {} ", when, then);
             }
-            if let Some(e) = else_expr {
+            if let Some(e) = &v.else_expr {
                 let e =
                     _generate_s3_select_where_condition(e, fields, anonymous_field_name)?;
                 let _ = write!(name, "ELSE {} ", e);
@@ -372,6 +367,7 @@ fn _generate_s3_select_where_condition(
 #[cfg(test)]
 mod test {
 
+    use crate::expr::Case;
     use crate::expr_s3_select::{
         generate_s3_select_where_condition, to_s3_select_literal,
     };
@@ -640,14 +636,14 @@ mod test {
         );
 
         // Expr::Case
-        let expr = Expr::Case {
-            expr: Some(Box::new(Expr::Literal(ScalarValue::Int64(Some(10))))),
-            when_then_expr: vec![(
+        let expr = Expr::Case(Case::new(
+            Some(Box::new(Expr::Literal(ScalarValue::Int64(Some(10))))),
+            vec![(
                 Box::new(Expr::Literal(ScalarValue::Int64(Some(11)))),
                 Box::new(Expr::Literal(ScalarValue::Boolean(Some(false)))),
             )],
-            else_expr: Some(Box::new(Expr::Literal(ScalarValue::Boolean(Some(true))))),
-        };
+            Some(Box::new(Expr::Literal(ScalarValue::Boolean(Some(true))))),
+        ));
         assert_eq!(
             generate_s3_select_where_condition(Some(&expr), &fields, false),
             "WHERE CASE 10 WHEN 11 THEN FALSE ELSE TRUE END"
