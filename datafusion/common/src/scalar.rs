@@ -111,6 +111,25 @@ pub enum ScalarValue {
     Dictionary(Box<DataType>, Box<ScalarValue>),
 }
 
+#[derive(Clone)]
+pub enum ScalarValueGroup {
+    Null,
+    Boolean,
+    Float,
+    Decimal,
+    Int,
+    UInt,
+    Utf8,
+    Binary,
+    List,
+    Date,
+    Time,
+    Timestamp,
+    Interval,
+    Struct,
+    Dictionary,
+}
+
 // manual implementation of `PartialEq` that uses OrderedFloat to
 // get defined behavior for floating point
 impl PartialEq for ScalarValue {
@@ -922,6 +941,41 @@ impl ScalarValue {
                 DataType::Dictionary(k.clone(), Box::new(v.get_datatype()))
             }
             ScalarValue::Null => DataType::Null,
+        }
+    }
+
+    pub fn get_scalar_value_group(&self) -> ScalarValueGroup {
+        match self {
+            ScalarValue::Boolean(_) => ScalarValueGroup::Boolean,
+            ScalarValue::UInt8(_) => ScalarValueGroup::UInt,
+            ScalarValue::UInt16(_) => ScalarValueGroup::UInt,
+            ScalarValue::UInt32(_) => ScalarValueGroup::UInt,
+            ScalarValue::UInt64(_) => ScalarValueGroup::UInt,
+            ScalarValue::Int8(_) => ScalarValueGroup::Int,
+            ScalarValue::Int16(_) => ScalarValueGroup::Int,
+            ScalarValue::Int32(_) => ScalarValueGroup::Int,
+            ScalarValue::Int64(_) => ScalarValueGroup::Int,
+            ScalarValue::Decimal128(_, _, _) => ScalarValueGroup::Decimal,
+            ScalarValue::TimestampSecond(_, _) => ScalarValueGroup::Timestamp,
+            ScalarValue::TimestampMillisecond(_, _) => ScalarValueGroup::Timestamp,
+            ScalarValue::TimestampMicrosecond(_, _) => ScalarValueGroup::Timestamp,
+            ScalarValue::TimestampNanosecond(_, _) => ScalarValueGroup::Timestamp,
+            ScalarValue::Float32(_) => ScalarValueGroup::Float,
+            ScalarValue::Float64(_) => ScalarValueGroup::Float,
+            ScalarValue::Utf8(_) => ScalarValueGroup::Utf8,
+            ScalarValue::LargeUtf8(_) => ScalarValueGroup::Utf8,
+            ScalarValue::Binary(_) => ScalarValueGroup::Binary,
+            ScalarValue::LargeBinary(_) => ScalarValueGroup::Binary,
+            ScalarValue::List(_, _) => ScalarValueGroup::List,
+            ScalarValue::Date32(_) => ScalarValueGroup::Date,
+            ScalarValue::Date64(_) => ScalarValueGroup::Date,
+            ScalarValue::Time64(_) => ScalarValueGroup::Time,
+            ScalarValue::IntervalYearMonth(_) => ScalarValueGroup::Interval,
+            ScalarValue::IntervalDayTime(_) => ScalarValueGroup::Interval,
+            ScalarValue::IntervalMonthDayNano(_) => ScalarValueGroup::Interval,
+            ScalarValue::Struct(_, _fields) => ScalarValueGroup::Struct,
+            ScalarValue::Dictionary(_k, _v) => ScalarValueGroup::Dictionary,
+            ScalarValue::Null => ScalarValueGroup::Null,
         }
     }
 

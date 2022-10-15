@@ -26,6 +26,7 @@ mod file_stream;
 mod json;
 mod parquet;
 mod row_filter;
+mod s3_select;
 
 pub(crate) use self::csv::plan_to_csv;
 pub use self::csv::CsvExec;
@@ -44,6 +45,8 @@ pub use avro::AvroExec;
 pub use file_stream::{FileOpenFuture, FileOpener, FileStream};
 pub(crate) use json::plan_to_json;
 pub use json::NdJsonExec;
+
+pub use s3_select::S3SelectExec;
 
 use crate::datasource::listing::FileRange;
 use crate::datasource::{listing::PartitionedFile, object_store::ObjectStoreUrl};
