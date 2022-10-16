@@ -23,6 +23,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from util import generate_csv_from_datafusion
+
 pg_db, pg_user, pg_host, pg_port = [
     os.environ.get(i)
     for i in (
@@ -33,22 +35,7 @@ pg_db, pg_user, pg_host, pg_port = [
     )
 ]
 
-CREATE_TABLE_SQL_FILE = "integration-tests/create_test_table.sql"
-
-
-def generate_csv_from_datafusion(fname: str):
-    return subprocess.check_output(
-        [
-            "./datafusion-cli/target/debug/datafusion-cli",
-            "-f",
-            CREATE_TABLE_SQL_FILE,
-            "-f",
-            fname,
-            "--format",
-            "csv",
-            "-q",
-        ],
-    )
+CREATE_TABLE_SQL_FILE = "integration-tests/psql/create_test_table.sql"
 
 
 def generate_csv_from_psql(fname: str):
@@ -86,7 +73,6 @@ class TestPsqlParity:
 
     @pytest.mark.parametrize("fname", test_files, ids=str)
     def test_sql_file(self, fname):
-        datafusion_output = pd.read_csv(io.BytesIO(generate_csv_from_datafusion(fname)))
+        datafusion_output = pd.read_csv(io.BytesIO(generate_csv_from_datafusion(CREATE_TABLE_SQL_FILE, fname)))
         psql_output = pd.read_csv(io.BytesIO(generate_csv_from_psql(fname)))
         np.testing.assert_allclose(datafusion_output, psql_output, equal_nan=True, verbose=True)
-

@@ -93,11 +93,23 @@ cargo test -p datafusion --tests sql_integration
 
 One very important test is the [sql_integration](https://github.com/apache/arrow-datafusion/blob/master/datafusion/core/tests/sql_integration.rs) test which validates DataFusion's ability to run a large assortment of SQL queries against an assortment of data setups.
 
-### SQL / Postgres Integration Tests
+### Integration Tests
 
-The [integration-tests](https://github.com/apache/arrow-datafusion/blob/master/datafusion/integration-tests) directory contains a harness that runs certain queries against both postgres and datafusion and compares results
+The [integration-tests](https://github.com/apache/arrow-datafusion/blob/master/datafusion/integration-tests) directory contains two parts: `psql` and `s3select`.
 
-#### setup environment
+#### Install dependencies
+
+```shell
+# Install dependencies
+python -m pip install --upgrade pip setuptools wheel
+python -m pip install -r integration-tests/requirements.txt
+```
+
+#### `psql`: SQL / Postgres Integration Tests
+
+A harness that runs certain queries against both postgres and datafusion and compares results.
+
+##### setup environment
 
 ```shell
 export POSTGRES_DB=postgres
@@ -106,40 +118,49 @@ export POSTGRES_HOST=localhost
 export POSTGRES_PORT=5432
 ```
 
-#### Install dependencies
+If `podman` is available, you can build a PostgreSQL by the following command:
+
+```bash
+podman run --name postgres \
+-e POSTGRES_HOST_AUTH_METHOD=trust \
+-e POSTGRES_INITDB_ARGS="--encoding=UTF-8 --lc-collate=C --lc-ctype=C" \
+-p 5432:5432 \
+-d docker.io/postgres:14
+```
+
+##### Create table to PostgreSQL
 
 ```shell
-# Install dependencies
-python -m pip install --upgrade pip setuptools wheel
-python -m pip install -r integration-tests/requirements.txt
-
-# setup environment
-POSTGRES_DB=postgres POSTGRES_USER=postgres POSTGRES_HOST=localhost POSTGRES_PORT=5432 python -m pytest -v integration-tests/test_psql_parity.py
-
 # Create
-psql -d "$POSTGRES_DB" -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -c 'CREATE TABLE IF NOT EXISTS test (
-  c1 character varying NOT NULL,
-  c2 integer NOT NULL,
-  c3 smallint NOT NULL,
-  c4 smallint NOT NULL,
-  c5 integer NOT NULL,
-  c6 bigint NOT NULL,
-  c7 smallint NOT NULL,
-  c8 integer NOT NULL,
-  c9 bigint NOT NULL,
-  c10 character varying NOT NULL,
-  c11 double precision NOT NULL,
-  c12 double precision NOT NULL,
-  c13 character varying NOT NULL
-);'
-
+psql -d "$POSTGRES_DB" -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -f integration-tests/psql/create_test_table_postgres.sql
 psql -d "$POSTGRES_DB" -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -c "\copy test FROM '$(pwd)/testing/data/csv/aggregate_test_100.csv' WITH (FORMAT csv, HEADER true);"
 ```
 
-#### Invoke the test runner
+##### Invoke the test runner
 
 ```shell
-python -m pytest -v integration-tests/test_psql_parity.py
+python -m pytest -v integration-tests/psql/test_psql_parity.py
+```
+
+#### `s3select`: S3 Select Integration Tests
+Set the following environment variables as appropriate for your environment.
+
+- `AWS_DEFAULT_REGION`
+- `AWS_SECRET_ACCESS_KEY`
+- `AWS_ACCESS_KEY_ID`
+- `S3_BUCKET_NAME`
+
+If you have already set up `awscli` on your system, you can set the AWS SDK variables as follows:
+```bash
+export AWS_DEFAULT_REGION=$(aws configure get default.region)
+export AWS_SECRET_ACCESS_KEY=$(aws configure get default.aws_secret_access_key)
+export AWS_ACCESS_KEY_ID=$(aws configure get default.aws_access_key_id)
+```
+
+##### Invoke the test runner
+
+```shell
+python -m pytest -v integration-tests/s3select/test_s3select.py
 ```
 
 ## Benchmarks

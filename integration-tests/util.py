@@ -13,8 +13,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-pytest
-numpy
-pandas
-boto3
-jinja2
+
+import subprocess
+
+
+def generate_csv_from_datafusion(create_table_fname: str, fname: str):
+    return subprocess.check_output(
+        [
+            "./datafusion-cli/target/debug/datafusion-cli",
+            "-f",
+            create_table_fname,
+            "-f",
+            fname,
+            "--format",
+            "csv",
+            "-q",
+        ],
+    )
