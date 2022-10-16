@@ -163,7 +163,7 @@ jobs:
           # make sure psql can access the server
           echo "$POSTGRES_HOST:$POSTGRES_PORT:$POSTGRES_DB:$POSTGRES_USER:$POSTGRES_PASSWORD" | tee ~/.pgpass
           chmod 0600 ~/.pgpass
-          psql -d "$POSTGRES_DB" -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -f integration-tests/create_test_table_postgres.sql
+          psql -d "$POSTGRES_DB" -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -f integration-tests/psql/create_test_table_postgres.sql
           psql -d "$POSTGRES_DB" -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -c "\copy test FROM '$(pwd)/testing/data/csv/aggregate_test_100.csv' WITH (FORMAT csv, HEADER true);"
         env:
           POSTGRES_HOST: localhost
@@ -174,7 +174,7 @@ jobs:
       - name: Build datafusion-cli
         run: (cd datafusion-cli && cargo build)
       - name: Test Psql Parity
-        run: python -m pytest -v integration-tests/test_psql_parity.py
+        run: python -m pytest -v integration-tests/psql/test_psql_parity.py
         env:
           POSTGRES_HOST: localhost
           POSTGRES_PORT: ${{ job.services.postgres.ports[5432] }}

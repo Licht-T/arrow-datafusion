@@ -28,15 +28,17 @@ use bytes::Buf;
 
 use datafusion_common::DataFusionError;
 
+use datafusion_expr::expr::Expr;
+use datafusion_optimizer::utils::combine_filters;
+
 use futures::TryFutureExt;
 use object_store::{ObjectMeta, ObjectStore};
 
 use super::FileFormat;
-use crate::datasource::file_format::file_type::FileCompressionType;
+use crate::datasource::file_format::file_type::{FileCompressionType, FileType};
 use crate::datasource::file_format::DEFAULT_SCHEMA_INFER_MAX_RECORD;
 use crate::error::Result;
-use crate::logical_expr::Expr;
-use crate::physical_plan::file_format::{CsvExec, FileScanConfig};
+use crate::physical_plan::file_format::{CsvExec, FileScanConfig, S3SelectExec};
 use crate::physical_plan::ExecutionPlan;
 use crate::physical_plan::Statistics;
 
@@ -160,15 +162,29 @@ impl FileFormat for CsvFormat {
     async fn create_physical_plan(
         &self,
         conf: FileScanConfig,
-        _filters: &[Expr],
+        filters: &[Expr],
     ) -> Result<Arc<dyn ExecutionPlan>> {
-        let exec = CsvExec::new(
-            conf,
-            self.has_header,
-            self.delimiter,
-            self.file_compression_type.to_owned(),
-        );
-        Ok(Arc::new(exec))
+        if self.is_s3_select(conf.object_store_url.as_str()) {
+            let predicate = combine_filters(filters);
+
+            let exec = S3SelectExec::new(
+                conf,
+                predicate,
+                FileType::CSV,
+                self.file_compression_type.to_owned(),
+            )
+            .with_has_header(self.has_header)
+            .with_delimiter(self.delimiter);
+            Ok(Arc::new(exec))
+        } else {
+            let exec = CsvExec::new(
+                conf,
+                self.has_header,
+                self.delimiter,
+                self.file_compression_type.to_owned(),
+            );
+            Ok(Arc::new(exec))
+        }
     }
 }
 

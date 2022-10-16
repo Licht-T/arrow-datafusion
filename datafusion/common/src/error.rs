@@ -18,6 +18,7 @@
 //! DataFusion error types
 
 use std::error;
+use std::error::Error;
 use std::fmt::{Display, Formatter};
 use std::io;
 use std::result;
@@ -191,6 +192,21 @@ impl Display for SchemaError {
                 }
             }
         }
+    }
+}
+
+impl From<tokio::task::JoinError> for DataFusionError {
+    fn from(e: tokio::task::JoinError) -> Self {
+        DataFusionError::IoError(e.into())
+    }
+}
+
+impl<E, M> From<aws_smithy_http::result::SdkError<E, M>> for DataFusionError
+where
+    E: Error,
+{
+    fn from(e: aws_smithy_http::result::SdkError<E, M>) -> Self {
+        DataFusionError::Internal(format!("AWS SDK Error: {}", e))
     }
 }
 
