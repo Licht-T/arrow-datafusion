@@ -18,30 +18,10 @@
 use datafusion::error::Result;
 use std::{env, str::FromStr, sync::Arc};
 
+use datafusion::common::object_store_scheme::ObjectStoreScheme;
 use datafusion::{datasource::object_store::ObjectStoreProvider, error::DataFusionError};
 use object_store::{aws::AmazonS3Builder, gcp::GoogleCloudStorageBuilder};
 use url::Url;
-
-#[derive(Debug, PartialEq, Eq, clap::ArgEnum, Clone)]
-pub enum ObjectStoreScheme {
-    S3,
-    GCS,
-}
-
-impl FromStr for ObjectStoreScheme {
-    type Err = DataFusionError;
-
-    fn from_str(input: &str) -> Result<Self> {
-        match input {
-            "s3" => Ok(ObjectStoreScheme::S3),
-            "gcs" => Ok(ObjectStoreScheme::GCS),
-            _ => Err(DataFusionError::Execution(format!(
-                "Unsupported object store scheme {}",
-                input
-            ))),
-        }
-    }
-}
 
 #[derive(Debug)]
 pub struct DatafusionCliObjectStoreProvider {}
@@ -50,7 +30,9 @@ pub struct DatafusionCliObjectStoreProvider {}
 impl ObjectStoreProvider for DatafusionCliObjectStoreProvider {
     fn get_by_url(&self, url: &Url) -> Result<Arc<dyn object_store::ObjectStore>> {
         ObjectStoreScheme::from_str(url.scheme()).map(|scheme| match scheme {
-            ObjectStoreScheme::S3 => build_s3_object_store(url),
+            ObjectStoreScheme::S3 | ObjectStoreScheme::S3SELECT => {
+                build_s3_object_store(url)
+            }
             ObjectStoreScheme::GCS => build_gcs_object_store(url),
         })?
     }

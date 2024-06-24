@@ -20,6 +20,7 @@
 use std::any::Any;
 
 use std::io::BufReader;
+
 use std::sync::Arc;
 
 use arrow::datatypes::Schema;
@@ -29,15 +30,17 @@ use arrow::json::reader::ValueIter;
 use async_trait::async_trait;
 use bytes::Buf;
 
+use datafusion_expr::combine_filters;
 use object_store::{GetResult, ObjectMeta, ObjectStore};
 
 use super::FileFormat;
 use super::FileScanConfig;
-use crate::datasource::file_format::file_type::FileCompressionType;
+use crate::datasource::file_format::file_type::{FileCompressionType, FileType};
 use crate::datasource::file_format::DEFAULT_SCHEMA_INFER_MAX_RECORD;
+
 use crate::error::Result;
 use crate::logical_plan::Expr;
-use crate::physical_plan::file_format::NdJsonExec;
+use crate::physical_plan::file_format::{NdJsonExec, S3SelectExec};
 use crate::physical_plan::ExecutionPlan;
 use crate::physical_plan::Statistics;
 
@@ -139,10 +142,22 @@ impl FileFormat for JsonFormat {
     async fn create_physical_plan(
         &self,
         conf: FileScanConfig,
-        _filters: &[Expr],
+        filters: &[Expr],
     ) -> Result<Arc<dyn ExecutionPlan>> {
-        let exec = NdJsonExec::new(conf, self.file_compression_type.to_owned());
-        Ok(Arc::new(exec))
+        if self.is_s3_select(conf.object_store_url.as_str()) {
+            let predicate = combine_filters(filters);
+
+            let exec = S3SelectExec::new(
+                conf,
+                predicate,
+                FileType::JSON,
+                self.file_compression_type.to_owned(),
+            );
+            Ok(Arc::new(exec))
+        } else {
+            let exec = NdJsonExec::new(conf, self.file_compression_type.to_owned());
+            Ok(Arc::new(exec))
+        }
     }
 }
 
